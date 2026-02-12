@@ -29,6 +29,8 @@ class MazeWindow(QMainWindow):
         self.cell_size = 30
         self.path_astar = None
         self.path_dijkstra = None
+        self.explored_astar = None
+        self.explored_dijkstra = None
         
         # Couleurs
         self.color_free = QColor(255, 255, 255)
@@ -38,6 +40,8 @@ class MazeWindow(QMainWindow):
         self.color_path_astar = QColor(100, 150, 255)
         self.color_path_dijkstra = QColor(255, 150, 100)
         self.color_bonus = QColor(255, 255, 0)
+        self.color_explored_astar = QColor(200, 220, 255)
+        self.color_explored_dijkstra = QColor(255, 220, 200)
         
         # Connecter les signaux
         self.ui.generateButton.clicked.connect(self.generate_maze)
@@ -45,6 +49,7 @@ class MazeWindow(QMainWindow):
         self.ui.solveDijkstraButton.clicked.connect(self.solve_dijkstra)
         self.ui.compareButton.clicked.connect(self.compare_algorithms)
         self.ui.clearButton.clicked.connect(self.clear_path)
+        self.ui.showExplorationCheckBox.stateChanged.connect(self.draw_maze)
         self.ui.actionQuitter.triggered.connect(self.close)
         self.ui.actionAPropos.triggered.connect(self.show_about)
         
@@ -91,6 +96,8 @@ class MazeWindow(QMainWindow):
         # Réinitialiser les chemins
         self.path_astar = None
         self.path_dijkstra = None
+        self.explored_astar = None
+        self.explored_dijkstra = None
         
         # Afficher le labyrinthe
         self.draw_maze()
@@ -136,7 +143,16 @@ class MazeWindow(QMainWindow):
                 rect = QGraphicsRectItem(QRectF(x, y, self.cell_size, self.cell_size))
                 rect.setBrush(QBrush(color))
                 rect.setPen(QPen(Qt.black, 1))
-                self.scene.add_item(rect)
+                self.scene.addItem(rect)
+        
+        # Dessiner les cellules explorées si activé
+        show_exploration = self.ui.showExplorationCheckBox.isChecked()
+        if show_exploration:
+            if self.explored_astar is not None:
+                self.draw_explored(self.explored_astar, self.color_explored_astar, 0.8)
+            
+            if self.explored_dijkstra is not None:
+                self.draw_explored(self.explored_dijkstra, self.color_explored_dijkstra, 0.8)
         
         # Dessiner les chemins s'ils existent
         if self.path_astar is not None:
@@ -144,6 +160,29 @@ class MazeWindow(QMainWindow):
         
         if self.path_dijkstra is not None:
             self.draw_path(self.path_dijkstra, self.color_path_dijkstra, 0.3)
+    
+    def draw_explored(self, explored_set, color, alpha):
+        """Dessine les cellules explorées sur le labyrinthe."""
+        if explored_set is None or len(explored_set) == 0:
+            return
+        
+        color_with_alpha = QColor(color)
+        color_with_alpha.setAlphaF(alpha)
+        
+        for (i, j) in explored_set:
+            # Ne pas redessiner le départ et l'arrivée
+            if (i, j) == self.maze.start or (i, j) == self.maze.goal:
+                continue
+            
+            x = j * self.cell_size
+            y = i * self.cell_size
+            
+            rect = QGraphicsRectItem(QRectF(x + 1, y + 1, 
+                                           self.cell_size - 2, 
+                                           self.cell_size - 2))
+            rect.setBrush(QBrush(color_with_alpha))
+            rect.setPen(QPen(Qt.NoPen))
+            self.scene.addItem(rect)
     
     def draw_path(self, path, color, alpha):
         """Dessine un chemin sur le labyrinthe."""
@@ -174,13 +213,17 @@ class MazeWindow(QMainWindow):
             return
         
         start_time = time.time()
-        self.path_astar = self.maze.solve()
+        result = self.maze.solve(return_explored=True)
         elapsed_time = time.time() - start_time
+        
+        self.path_astar, self.explored_astar = result
         
         if self.path_astar is None:
             QMessageBox.warning(self, "Aucun chemin", 
                               "Aucun chemin n'a été trouvé avec A* !")
             self.ui.statsText.append("\n❌ A* : Aucun chemin trouvé")
+            if self.explored_astar:
+                self.ui.statsText.append(f"   Cellules explorées: {len(self.explored_astar)}")
         else:
             # Calculer le coût du chemin
             cost = self.calculate_path_cost(self.path_astar)
@@ -189,6 +232,8 @@ class MazeWindow(QMainWindow):
             self.ui.statsText.append(f"   Longueur: {len(self.path_astar)} cellules")
             self.ui.statsText.append(f"   Coût total: {cost:.2f}")
             self.ui.statsText.append(f"   Temps: {elapsed_time*1000:.2f} ms")
+            if self.explored_astar:
+                self.ui.statsText.append(f"   Cellules explorées: {len(self.explored_astar)}")
             
             self.draw_maze()
     
@@ -198,13 +243,17 @@ class MazeWindow(QMainWindow):
             return
         
         start_time = time.time()
-        self.path_dijkstra = self.maze.solve_dijkstra()
+        result = self.maze.solve_dijkstra(return_explored=True)
         elapsed_time = time.time() - start_time
+        
+        self.path_dijkstra, self.explored_dijkstra = result
         
         if self.path_dijkstra is None:
             QMessageBox.warning(self, "Aucun chemin", 
                               "Aucun chemin n'a été trouvé avec Dijkstra !")
             self.ui.statsText.append("\n❌ Dijkstra : Aucun chemin trouvé")
+            if self.explored_dijkstra:
+                self.ui.statsText.append(f"   Cellules explorées: {len(self.explored_dijkstra)}")
         else:
             # Calculer le coût du chemin
             cost = self.calculate_path_cost(self.path_dijkstra)
@@ -213,6 +262,8 @@ class MazeWindow(QMainWindow):
             self.ui.statsText.append(f"   Longueur: {len(self.path_dijkstra)} cellules")
             self.ui.statsText.append(f"   Coût total: {cost:.2f}")
             self.ui.statsText.append(f"   Temps: {elapsed_time*1000:.2f} ms")
+            if self.explored_dijkstra:
+                self.ui.statsText.append(f"   Cellules explorées: {len(self.explored_dijkstra)}")
             
             self.draw_maze()
     
@@ -226,32 +277,42 @@ class MazeWindow(QMainWindow):
         
         # A*
         start_time = time.time()
-        self.path_astar = self.maze.solve()
+        result_astar = self.maze.solve(return_explored=True)
         time_astar = time.time() - start_time
+        self.path_astar, self.explored_astar = result_astar
         
         # Dijkstra
         start_time = time.time()
-        self.path_dijkstra = self.maze.solve_dijkstra()
+        result_dijkstra = self.maze.solve_dijkstra(return_explored=True)
         time_dijkstra = time.time() - start_time
+        self.path_dijkstra, self.explored_dijkstra = result_dijkstra
         
         # Afficher les résultats
         if self.path_astar is None:
-            self.ui.statsText.append("❌ A* : Aucun chemin trouvé\n")
+            self.ui.statsText.append("❌ A* : Aucun chemin trouvé")
+            if self.explored_astar:
+                self.ui.statsText.append(f"   Cellules explorées: {len(self.explored_astar)}\n")
         else:
             cost_astar = self.calculate_path_cost(self.path_astar)
             self.ui.statsText.append(f"✅ A* :")
             self.ui.statsText.append(f"   Longueur: {len(self.path_astar)} cellules")
             self.ui.statsText.append(f"   Coût: {cost_astar:.2f}")
-            self.ui.statsText.append(f"   Temps: {time_astar*1000:.2f} ms\n")
+            self.ui.statsText.append(f"   Temps: {time_astar*1000:.2f} ms")
+            if self.explored_astar:
+                self.ui.statsText.append(f"   Cellules explorées: {len(self.explored_astar)}\n")
         
         if self.path_dijkstra is None:
-            self.ui.statsText.append("❌ Dijkstra : Aucun chemin trouvé\n")
+            self.ui.statsText.append("❌ Dijkstra : Aucun chemin trouvé")
+            if self.explored_dijkstra:
+                self.ui.statsText.append(f"   Cellules explorées: {len(self.explored_dijkstra)}\n")
         else:
             cost_dijkstra = self.calculate_path_cost(self.path_dijkstra)
             self.ui.statsText.append(f"✅ Dijkstra :")
             self.ui.statsText.append(f"   Longueur: {len(self.path_dijkstra)} cellules")
             self.ui.statsText.append(f"   Coût: {cost_dijkstra:.2f}")
-            self.ui.statsText.append(f"   Temps: {time_dijkstra*1000:.2f} ms\n")
+            self.ui.statsText.append(f"   Temps: {time_dijkstra*1000:.2f} ms")
+            if self.explored_dijkstra:
+                self.ui.statsText.append(f"   Cellules explorées: {len(self.explored_dijkstra)}\n")
         
         # Analyse comparative
         if self.path_astar is not None and self.path_dijkstra is not None:
@@ -269,6 +330,15 @@ class MazeWindow(QMainWindow):
             else:
                 speedup = time_astar / time_dijkstra
                 self.ui.statsText.append(f"   Dijkstra est {speedup:.2f}x plus rapide")
+            
+            # Comparaison de l'exploration
+            if self.explored_astar and self.explored_dijkstra:
+                self.ui.statsText.append(f"\n   Cellules explorées:")
+                self.ui.statsText.append(f"   • A* : {len(self.explored_astar)}")
+                self.ui.statsText.append(f"   • Dijkstra : {len(self.explored_dijkstra)}")
+                if len(self.explored_astar) < len(self.explored_dijkstra):
+                    ratio = len(self.explored_dijkstra) / len(self.explored_astar)
+                    self.ui.statsText.append(f"   → A* explore {ratio:.2f}x moins de cellules")
             
             self.ui.statsText.append(f"\n💡 Complexité théorique :")
             self.ui.statsText.append(f"   A* : O((V+E) log V) avec heuristique")
@@ -292,8 +362,10 @@ class MazeWindow(QMainWindow):
         """Efface les chemins affichés."""
         self.path_astar = None
         self.path_dijkstra = None
+        self.explored_astar = None
+        self.explored_dijkstra = None
         self.draw_maze()
-        self.ui.statsText.append("\nChemins effacés")
+        self.ui.statsText.append("\nChemins et exploration effacés")
     
     def show_about(self):
         """Affiche la boîte de dialogue À propos."""

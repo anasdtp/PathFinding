@@ -161,14 +161,17 @@ class Maze:
         goal_row, goal_col = self.goal
         return abs(row - goal_row) + abs(col - goal_col)
    
-    def solve(self):
+    def solve(self, return_explored=False):
         """
         Résout le labyrinthe en utilisant l'algorithme A*.
         Retourne le chemin optimal du point de départ au point d'arrivée.
        
+        Args:
+            return_explored (bool): Si True, retourne aussi les cellules explorées
+       
         Returns:
-            list: Liste ordonnée des cellules (row, col) constituant le chemin optimal,
-                  ou None si aucun chemin n'existe
+            Si return_explored=False: list ou None (chemin optimal)
+            Si return_explored=True: tuple (path, explored_set) ou (None, explored_set)
         """
         # File de priorité : (priorité, compteur, (row, col))
         # priorité = coût_g + heuristique
@@ -194,7 +197,8 @@ class Maze:
            
             # Si on a atteint l'arrivée, reconstruire et retourner le chemin
             if current == self.goal:
-                return self._reconstruct_path(came_from, current)
+                path = self._reconstruct_path(came_from, current)
+                return (path, closed_set) if return_explored else path
            
             # Marquer la cellule comme explorée
             if current in closed_set:
@@ -231,16 +235,19 @@ class Maze:
                     counter += 1
        
         # Si la file est vide et qu'on n'a pas atteint l'arrivée, aucun chemin n'existe
-        return None
+        return (None, closed_set) if return_explored else None
    
-    def solve_dijkstra(self):
+    def solve_dijkstra(self, return_explored=False):
         """
         Résout le labyrinthe en utilisant l'algorithme de Dijkstra.
         Retourne le chemin optimal du point de départ au point d'arrivée.
        
+        Args:
+            return_explored (bool): Si True, retourne aussi les cellules explorées
+       
         Returns:
-            list: Liste ordonnée des cellules (row, col) constituant le chemin optimal,
-                  ou None si aucun chemin n'existe
+            Si return_explored=False: list ou None (chemin optimal)
+            Si return_explored=True: tuple (path, explored_set) ou (None, explored_set)
         """
         # File de priorité : (distance, compteur, (row, col))
         open_set = []
@@ -265,7 +272,8 @@ class Maze:
            
             # Si on a atteint l'arrivée, reconstruire et retourner le chemin
             if current == self.goal:
-                return self._reconstruct_path(came_from, current)
+                path = self._reconstruct_path(came_from, current)
+                return (path, closed_set) if return_explored else path
            
             # Marquer la cellule comme explorée
             if current in closed_set:
@@ -297,7 +305,7 @@ class Maze:
                     counter += 1
        
         # Si la file est vide et qu'on n'a pas atteint l'arrivée, aucun chemin n'existe
-        return None
+        return (None, closed_set) if return_explored else None
    
     def _reconstruct_path(self, came_from, current):
         """

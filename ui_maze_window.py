@@ -196,6 +196,12 @@ class Ui_MainWindow(object):
 
         self.verticalLayout_3.addWidget(self.compareButton)
 
+        self.showExplorationCheckBox = QCheckBox(self.algorithmGroup)
+        self.showExplorationCheckBox.setObjectName(u"showExplorationCheckBox")
+        self.showExplorationCheckBox.setChecked(False)
+
+        self.verticalLayout_3.addWidget(self.showExplorationCheckBox)
+
 
         self.verticalLayout.addWidget(self.algorithmGroup)
 
@@ -275,6 +281,7 @@ class Ui_MainWindow(object):
         self.solveAStarButton.setText(QCoreApplication.translate("MainWindow", u"R\u00e9soudre avec A*", None))
         self.solveDijkstraButton.setText(QCoreApplication.translate("MainWindow", u"R\u00e9soudre avec Dijkstra", None))
         self.compareButton.setText(QCoreApplication.translate("MainWindow", u"Comparer les deux", None))
+        self.showExplorationCheckBox.setText(QCoreApplication.translate("MainWindow", u"Afficher l'exploration", None))
         self.clearButton.setText(QCoreApplication.translate("MainWindow", u"Effacer le chemin", None))
         self.menuFichier.setTitle(QCoreApplication.translate("MainWindow", u"Fichier", None))
         self.menuAide.setTitle(QCoreApplication.translate("MainWindow", u"Aide", None))
