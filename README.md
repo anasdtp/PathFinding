@@ -51,14 +51,44 @@ python app.py
 - Résoudre avec A* ou Dijkstra
 - Comparer les deux algorithmes
 - Visualisation colorée du labyrinthe et des chemins
+- **Afficher l'exploration** : Visualiser toutes les cellules explorées par chaque algorithme
+
+### 📸 Captures d'écran
+
+#### Interface principale
+![Interface principale](captures/image.png)
+
+#### Labyrinthe avec obstacles
+![Labyrinthe généré](captures/image2.png)
+*Labyrinthe 35x35 avec obstacles aléatoires*
+
+#### Visualisation avec A*
+![Résolution A* avec motif complexe](captures/image3.png)
+*A* - Zones bleues claires montrant les cellules explorées*
+
+#### Visualisation avec Dijkstra
+![Résolution Dijkstra](captures/image4.png)
+*Dijkstra sur le même labyrinthe - Zones oranges claires montrant les cellules explorées*
+
+### Comparaison des deux
+![Comparaison](captures/image5.png)
+
+#### Visualisation avec points de passage bonus (Jaune)
+![Résolution avec bonus](captures/image6.png)
+![Résolution avec bonus](captures/image7.png)
+*A* et Dijkstra avec bonus - Cellules jaunes représentant les récompenses*
 
 **Légende des couleurs:**
 - 🟢 Vert : Point de départ
 - 🔴 Rouge : Point d'arrivée
 - ⬛ Noir : Obstacles
 - 🟡 Jaune : Bonus (récompenses positives)
-- 🔵 Bleu : Chemin trouvé par A*
-- 🟠 Orange : Chemin trouvé par Dijkstra
+- 🔵 Bleu clair : Cellules explorées par A*
+- 🟠 Orange clair : Cellules explorées par Dijkstra
+- 🔵 Bleu foncé : Chemin final trouvé par A*
+- 🟠 Orange foncé : Chemin final trouvé par Dijkstra
+
+> **💡 Observation clé** : Sur les captures, on voit clairement que A* explore environ **36% moins de cellules** que Dijkstra (419 vs 654) grâce à son heuristique de Manhattan qui guide la recherche vers le but !
 
 ### Tests en ligne de commande
 
